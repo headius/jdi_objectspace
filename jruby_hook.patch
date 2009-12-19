@@ -1,0 +1,43 @@
+diff --git a/src/org/jruby/ObjectYieldHook.java b/src/org/jruby/ObjectYieldHook.java
+new file mode 100644
+index 0000000..57c96f9
+--- /dev/null
++++ b/src/org/jruby/ObjectYieldHook.java
+@@ -0,0 +1,12 @@
++package org.jruby;
++
++import org.jruby.runtime.Block;
++import org.jruby.runtime.ThreadContext;
++import org.jruby.runtime.builtin.IRubyObject;
++
++public class ObjectYieldHook {
++    public static void yieldOnce(ThreadContext context, IRubyObject cls, IRubyObject obj, Block block) {
++        // a MethodEntry request gets filed for this so the obj will keep changing by the debugger
++        if (obj.getMetaClass().getRealClass() == cls) block.yield(context, obj);
++    }
++}
+\ No newline at end of file
+diff --git a/src/org/jruby/RubyJRuby.java b/src/org/jruby/RubyJRuby.java
+index 0511a95..2906fee 100644
+--- a/src/org/jruby/RubyJRuby.java
++++ b/src/org/jruby/RubyJRuby.java
+@@ -210,6 +210,12 @@ public class RubyJRuby {
+ 
+             return runtime.newEmptyArray();
+         }
++        
++        @JRubyMethod(name = "yield_once", module = true)
++        public static IRubyObject yield_once(ThreadContext context, IRubyObject recv, IRubyObject cls, Block block) {
++            ObjectYieldHook.yieldOnce(context, cls, null, block);
++            return cls;
++        }
+     }
+ 
+     @JRubyMethod(name = "runtime", frame = true, module = true)
+@@ -726,4 +732,4 @@ public class RubyJRuby {
+     private static IRubyObject getNameFrom(Ruby runtime, INameNode node) {
+         return node == null ? runtime.getNil() : RubySymbol.newSymbol(runtime, node.getName());
+     }
+-}
++}
+\ No newline at end of file
